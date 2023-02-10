@@ -8,12 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="SampleFiles\SampleModel.cs" />
     <Compile Remove="SampleFiles\SampleModelFile2.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="SampleFiles\SampleModel.cs" />
   </ItemGroup>
 
   <ItemGroup>
