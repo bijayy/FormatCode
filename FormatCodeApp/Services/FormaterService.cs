@@ -22,8 +22,8 @@ public class FormaterService
 
                 string fileText = await File.ReadAllTextAsync(path);
                 string[] streamReader = fileText.Split(Environment.NewLine, StringSplitOptions.None);
-                StringBuilder newText = new StringBuilder();
-                StringBuilder replacableText = new();
+                StringBuilder formattedString = new StringBuilder();
+                StringBuilder peropertyText = new();
                 string previousLine = string.Empty;
                 int lineNumber = 0;
                 int startBracketCount = 0;
@@ -33,42 +33,42 @@ public class FormaterService
                 {
                     Console.WriteLine("Reading line text: " + line);
 
-                    if (line.Contains("private") || string.IsNullOrWhiteSpace(line))
+                    if (line.Contains("private") || string.IsNullOrWhiteSpace(line)) //Removes private field from models
                     {
                         previousLine = "";
                         continue;
                     }
 
-                    if (line.Contains("using") && line.EndsWith(";")
+                    if (line.Contains("using") && line.EndsWith(";") //Just add as it is if using, namesapce and get; set; already applied.
                         || line.Contains("namespace") && line.EndsWith(";")
                         || line.Contains("{") && line.Contains("}") && line.Contains("get;") && line.Contains("set;"))
                     {
                         previousLine = line;
-                        newText.AppendLine(line.TrimEnd());
+                        formattedString.AppendLine(line.TrimEnd());
 
                         if(line.Contains("get;") && line.Contains("set;") && line.EndsWith("}"))
-                            newText.AppendLine();
+                            formattedString.AppendLine();
 
                         continue;
                     }
 
                     if (((previousLine.Contains("namespace") || previousLine.Contains("class") || previousLine.Contains("interface"))
                         || (line.Contains("namespace") || line.Contains("class") || line.Contains("interface")))
-                        && line.Contains("{"))
+                        && line.Contains("{")) // If namesapce, class, interface then add as it is.
                     {
-                        replacableText.Clear();
+                        peropertyText.Clear();
                         startBracketCount = 0;
                         endBracketCount = 0;
                         previousLine = line;
 
-                        newText.AppendLine(line.TrimEnd());
+                        formattedString.AppendLine(line.TrimEnd());
                         continue;
                     }
 
-                    if (line.Contains("{"))
+                    if (line.Contains("{")) // If property then increase the counter and add text to the property text.
                     {
                         if (line.Trim().Length == 1 && startBracketCount == 0)
-                            replacableText.AppendLine(previousLine.TrimEnd());
+                            peropertyText.AppendLine(previousLine.TrimEnd());
 
                         startBracketCount++;
                     }
@@ -78,20 +78,20 @@ public class FormaterService
                         endBracketCount++;
                     }
 
-                    if (startBracketCount > 0)
-                        replacableText.AppendLine(line.TrimEnd());
+                    if (startBracketCount > 0) // If property then add text to the property text.
+                        peropertyText.AppendLine(line.TrimEnd());
 
-                    if (startBracketCount == 0)
-                        newText.AppendLine(line.TrimEnd());
+                    if (startBracketCount == 0) // If not property then add text to the formattedString.
+                        formattedString.AppendLine(line.TrimEnd());
 
                     //replace with the new text
-                    if (startBracketCount > 0 && startBracketCount == endBracketCount)
+                    if (startBracketCount > 0 && startBracketCount == endBracketCount) // If property full collected then replace with formatted property.
                     {
-                        string replacableTextStr = replacableText.ToString();
-                        newText = new(FormattedProperty(newText.ToString(), replacableTextStr));
-                        newText.AppendLine();
+                        string replacableTextStr = peropertyText.ToString();
+                        formattedString = new(FormattedProperty(formattedString.ToString(), replacableTextStr));
+                        formattedString.AppendLine();
 
-                        replacableText.Clear();
+                        peropertyText.Clear();
                         startBracketCount = 0;
                         endBracketCount = 0;
                     }
@@ -100,7 +100,7 @@ public class FormaterService
                     previousLine = line;
                 }
 
-                await File.WriteAllTextAsync(path, newText.ToString(), Encoding.UTF8);
+                await File.WriteAllTextAsync(path, formattedString.ToString(), Encoding.UTF8);
             }
         });
     }
